@@ -20,9 +20,6 @@ my $nbError = 0;
 my $item = "";
 my $error = "";
 while (my $line = $file_handle->getline()) {
-	# if ($line =~ m/Error converting/) {
-	# 	$nbError++;
-	# }
 	if ($line =~ /"(.*.flac)"/) {
 		$item = "$1";
 	}
@@ -32,4 +29,21 @@ while (my $line = $file_handle->getline()) {
 	}
 }
 
-print "$nbError errors\n";
+print "$nbError errors from foobar2000\n";
+
+$nbError = 0;
+$file = $dir->file("dbpoweramp-errors.txt");
+$content = $file->slurp();
+$file_handle = $file->openr();
+
+while (my $line = $file_handle->getline()) {
+	if ($line =~ m/Encountered/) {
+		if ($line =~ /'(.*.*\/.*.*)'/) {
+			$item = "$1";
+		}
+		print "$item\tCorrupted FLAC\n";
+		$nbError++;
+	}
+}
+
+print "$nbError errors from dbPowerAmp\n";
