@@ -19,12 +19,13 @@ my $file_handle = $file->openr();
 my $nbError = 0;
 my $item = "";
 my $error = "";
+my @filesWithError;
 while (my $line = $file_handle->getline()) {
 	if ($line =~ /"(.*.flac)"/) {
 		$item = "$1";
 	}
 	if ($item ne '' && $line =~ m/Error: Corrupted FLAC stream/) {
-		print "$item\tCorrupted FLAC\n";
+		push @filesWithError, "$item;Corrupted FLAC;";
 		$nbError++;
 	}
 }
@@ -37,13 +38,27 @@ $content = $file->slurp();
 $file_handle = $file->openr();
 
 while (my $line = $file_handle->getline()) {
+	if ($line =~ /'(\/.+\/[^\/]+.flac)'/) {
+		$item = "$1";
+	}
 	if ($line =~ m/Encountered/) {
-		if ($line =~ /'(.*.*\/.*.*)'/) {
-			$item = "$1";
-		}
-		print "$item\tCorrupted FLAC\n";
+		push @filesWithError, "$item;Corrupted FLAC;";
 		$nbError++;
 	}
+	if ($line =~ m/md5 did not match decoded data, file is corrupt./) {
+		push @filesWithError, "$item;Corrupted FLAC;";
+		$nbError++;
+	}
+}
+
+$file = $dir->file("results.txt"); # /tmp/file.txt
+
+# Get a file_handle (IO::File object) you can write to
+$file_handle = $file->openw();
+
+foreach my $line ( @filesWithError ) {
+    # Add the line to the file
+    $file_handle->print($line . "\n");
 }
 
 print "$nbError errors from dbPowerAmp\n";
