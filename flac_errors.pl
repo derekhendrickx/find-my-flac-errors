@@ -19,13 +19,13 @@ my $file_handle = $file->openr();
 my $nbError = 0;
 my $item = "";
 my $error = "";
-my @filesWithError;
+my %filesWithError;
 while (my $line = $file_handle->getline()) {
 	if ($line =~ /"(.*.flac)"/) {
 		$item = "$1";
 	}
 	if ($item ne '' && $line =~ m/Error: Corrupted FLAC stream/) {
-		push @filesWithError, "$item;Corrupted FLAC;";
+		$filesWithError{"$item"} = 1;
 		$nbError++;
 	}
 }
@@ -41,12 +41,8 @@ while (my $line = $file_handle->getline()) {
 	if ($line =~ /'(\/.+\/[^\/]+.flac)'/) {
 		$item = "$1";
 	}
-	if ($line =~ m/Encountered/) {
-		push @filesWithError, "$item;Corrupted FLAC;";
-		$nbError++;
-	}
-	if ($line =~ m/md5 did not match decoded data, file is corrupt./) {
-		push @filesWithError, "$item;Corrupted FLAC;";
+	if ($line =~ m/Encountered/ || $line =~ m/md5 did not match decoded data, file is corrupt./) {
+		$filesWithError{"$item"} = 1;
 		$nbError++;
 	}
 }
@@ -56,7 +52,8 @@ $file = $dir->file("results.txt"); # /tmp/file.txt
 # Get a file_handle (IO::File object) you can write to
 $file_handle = $file->openw();
 
-foreach my $line ( @filesWithError ) {
+my @result = keys %filesWithError;
+foreach my $line ( @result ) {
     # Add the line to the file
     $file_handle->print($line . "\n");
 }
