@@ -39,9 +39,7 @@ def main():
 	errorFile = open('samples/dbpoweramp-errors.txt', 'r')
 	errors = errorFile.readlines()
 
-	index = -1
 	nbErrorsDbPowerAmp = 0
-	previousLineStartsWithSpaces = False
 	for i in range(len(errors)):
 		line = errors[i]
 		if re.search(r'^\s{3}', line) == None:
@@ -59,19 +57,34 @@ def main():
 
 	errorFile.close()
 
+	errorFile = open('samples/dbpoweramp-infos.txt', 'r')
+	errors = errorFile.readlines()
+
+	for i in range(0, len(errors), 3):
+		line = errors[i]
+		match = re.search(r'\/.+\/([^\/]+.flac)', line)
+		if match:
+			trackName = match.group(1)
+			normalizedTrackName = trackWithError.TrackWithError.normalizeName(trackName)
+			error = trackWithError.TrackWithError(trackName, match.group())
+			if normalizedTrackName in errorsDict:
+				error = errorsDict.get(normalizedTrackName)
+				if error.count == 1:
+					nbErrorsDbPowerAmp += 1
+				error.addCount()
+			errorsDict[normalizedTrackName] = error
+
+	errorFile.close()
+
 	print(nbErrorsFoobar, 'FLAC errors from foobar2000')
 	print(nbErrorsDbPowerAmp, 'FLAC errors from dbPowerAmp')
-	print(len(errorsDict))
+	print('Total', len(errorsDict), 'errors')
 
 	errorFile = open('samples/results.txt', 'w')
 	errorFile.write('Track name;Path;Count;\n')
 	i = 0
 	for k, v in errorsDict.items():
 		errorFile.write(v.name + ';' + v.path + ';' + str(v.count) + ';\n')
-		if v.count == 1:
-			i += 1
-			print(v.path)
-	print('Difference', i)
 
 if __name__ == "__main__":
 	main()
