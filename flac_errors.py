@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+
+'''
+Find the errors in reports from foobar2000 and dbPowerAmp
+'''
+
 import re
 
 import trackWithError
@@ -34,18 +40,21 @@ def main():
 
 	index = -1
 	nbErrorsDbPowerAmp = 0
+	previousLineStartsWithSpaces = False
 	for i in range(len(errors)):
 		line = errors[i]
-		match = re.search(r'/.+/([^/]+.flac)', line)
-		if match:
+		if re.search(r'^\s{3}', line) == None:
+			match = re.search(r'\/.+\/([^\/]+.flac)', line)
+		if match and (re.search(r'Encountered', line) or re.search(r'md5 did not match decoded data, file is corrupt.', line)):
 			trackName = match.group(1)
 			error = trackWithError.TrackWithError(trackName, match.group())
 			if trackName in errorsDict:
 				error = errorsDict.get(trackName)
 				error.addCount()
+			else:
+				nbErrorsDbPowerAmp += 1
 			errorsDict[trackName] = error
-		if (re.search(r'Encountered', line) or re.search(r'md5 did not match decoded data, file is corrupt.', line)):
-			nbErrorsDbPowerAmp += 1
+			print(trackName, line)
 
 	errorFile.close()
 
