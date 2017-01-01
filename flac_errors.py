@@ -26,11 +26,12 @@ def main():
 		match = re.search(r'[^".]+\\.+\\([^\\]+.flac)', line)
 		if match:
 			trackName = match.group(1)
+			normalizedTrackName = trackWithError.TrackWithError.normalizeName(trackName)
 			error = trackWithError.TrackWithError(trackName, match.group())
-			if trackName in errorsDict:
-				error = errorsDict.get(trackName)
+			if normalizedTrackName in errorsDict:
+				error = errorsDict.get(normalizedTrackName)
 				error.addCount()
-			errorsDict[trackName] = error
+			errorsDict[normalizedTrackName] = error
 			nbErrorsFoobar += 1
 
 	errorFile.close()
@@ -47,14 +48,14 @@ def main():
 			match = re.search(r'\/.+\/([^\/]+.flac)', line)
 		if match and (re.search(r'Encountered', line) or re.search(r'md5 did not match decoded data, file is corrupt.', line)):
 			trackName = match.group(1)
+			normalizedTrackName = trackWithError.TrackWithError.normalizeName(trackName)
 			error = trackWithError.TrackWithError(trackName, match.group())
-			if trackName in errorsDict:
-				error = errorsDict.get(trackName)
+			if normalizedTrackName in errorsDict:
+				error = errorsDict.get(normalizedTrackName)
 				error.addCount()
 			else:
 				nbErrorsDbPowerAmp += 1
-			errorsDict[trackName] = error
-			print(trackName, line)
+			errorsDict[normalizedTrackName] = error
 
 	errorFile.close()
 
@@ -65,7 +66,7 @@ def main():
 	errorFile = open('samples/results.txt', 'w')
 	errorFile.write('Track name;Path;Count;\n')
 	for k, v in errorsDict.items():
-		errorFile.write(k + ';' + v.path + ';' + str(v.count) + ';\n')
+		errorFile.write(v.name + ';' + v.path + ';' + str(v.count) + ';\n')
 
 if __name__ == "__main__":
 	main()
